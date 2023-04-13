@@ -1,4 +1,4 @@
-package com.example.orderservice.Exception;
+package com.example.authservice.Exception;
 
 public class ApiRequestException extends RuntimeException{
 

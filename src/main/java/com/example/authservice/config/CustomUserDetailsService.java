@@ -1,6 +1,6 @@
 package com.example.authservice.config;
 
-import com.example.authservice.domain.UserCredential;
+import com.example.authservice.entity.UserCredential;
 import com.example.authservice.repository.UserCredentialRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;

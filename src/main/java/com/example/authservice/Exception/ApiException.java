@@ -1,4 +1,4 @@
-package com.example.orderservice.Exception;
+package com.example.authservice.Exception;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
