@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/auth")
 public class AuthController {
 
-    //TODO: HEADERS TO REGISTER A NEW OWNER
 
     @Autowired
     private AuthService authService;

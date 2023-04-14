@@ -19,7 +19,7 @@ public class CustomUserDetails implements UserDetails {
     private Role role;
 
     public CustomUserDetails(UserCredential userCredential) {
-        this.username = userCredential.getName();
+        this.username = userCredential.getEmail();
         this.password = userCredential.getPassword();
         this.role = userCredential.getRole();
         this.authorities = Collections.singletonList(new SimpleGrantedAuthority(userCredential.getRole().toString()));

@@ -1,6 +1,7 @@
 package com.example.authservice.service;
 
 import com.example.authservice.Exception.ApiRequestException;
+import com.example.authservice.dto.CourierDTO;
 import com.example.authservice.dto.RestaurantDTO;
 import com.example.authservice.entity.Role;
 import com.example.authservice.entity.UserCredential;
@@ -9,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.parameters.P;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -37,7 +39,7 @@ public class AuthService {
             throw new ApiRequestException("User with this email "+credential.getEmail()+ " already exist");
         }
         UserCredential savedUser = repository.save(credential);
-        String token = generateToken(savedUser.getName(), savedUser.getRole());
+        String token = generateToken(savedUser.getEmail(), savedUser.getRole());
         if (savedUser.getRole() == Role.OWNER){
             RestaurantDTO restaurantDTO = new RestaurantDTO();
             restaurantDTO.setRestaurantName(savedUser.getName());
@@ -54,16 +56,44 @@ public class AuthService {
             savedUser.setRestaurantId(idRestaurant);
             repository.save(savedUser); // Сохраняем пользователя снова с обновленным idRestaurant
         }
+        //TODO:понять что делать
+        if (savedUser.getRole() == Role.COURIER){
+            CourierDTO courierDTO = new CourierDTO();
+            courierDTO.setName(savedUser.getName());
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.set(HttpHeaders.AUTHORIZATION, "Bearer " + token);
+            HttpEntity<CourierDTO> requestEntity = new HttpEntity<>(courierDTO, headers);
+            String uri = "http://localhost:8080/courier/registerCourier";
+            restTemplate.exchange(uri, HttpMethod.POST, requestEntity, Long.class);
+        }
         return "user added to the system";
     }
 
 
 
-    public String generateToken(String username, Role role) {
-        return jwtService.generateToken(username, role);
+    public String generateToken(String email, Role role) {
+        return jwtService.generateToken(email, role);
     }
 
     public void validateToken(String token){
         jwtService.validateToken(token);
     }
+
+    public String getAccessToken(String email, String password) {
+        Optional<UserCredential> userCredentialOptional = repository.findByEmail(email);
+
+        if (userCredentialOptional.isPresent()) {
+            UserCredential user = userCredentialOptional.get();
+            if (passwordEncoder.matches(password, user.getPassword())) {
+                return jwtService.generateToken(user.getEmail(), user.getRole());
+            } else {
+                throw new ApiRequestException("Invalid password");
+            }
+        } else {
+            throw new ApiRequestException("User with email " + email + " not found");
+        }
+    }
+
 }
