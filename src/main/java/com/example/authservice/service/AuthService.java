@@ -6,7 +6,7 @@ import com.example.authservice.entity.Role;
 import com.example.authservice.entity.UserCredential;
 import com.example.authservice.repository.UserCredentialRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -36,18 +36,28 @@ public class AuthService {
         if (email){
             throw new ApiRequestException("User with this email "+credential.getEmail()+ " already exist");
         }
-        if (credential.getRole() == Role.OWNER){
+        UserCredential savedUser = repository.save(credential);
+        String token = generateToken(savedUser.getName(), savedUser.getRole());
+        if (savedUser.getRole() == Role.OWNER){
             RestaurantDTO restaurantDTO = new RestaurantDTO();
-            restaurantDTO.setRestaurantName(credential.getName());
-            String uri = "http://localhost:8080/restaurant/create";
-            ResponseEntity<Long> responseEntity = restTemplate.postForEntity(uri, restaurantDTO, Long.class);
-            Long idRestaurant = responseEntity.getBody();
-            credential.setRestaurantId(idRestaurant);
+            restaurantDTO.setRestaurantName(savedUser.getName());
+            restaurantDTO.setIsActive(false);
 
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.set(HttpHeaders.AUTHORIZATION, "Bearer " + token);
+            HttpEntity<RestaurantDTO> requestEntity = new HttpEntity<>(restaurantDTO, headers);
+
+            String uri = "http://localhost:8080/restaurant/create";
+            ResponseEntity<Long> responseEntity = restTemplate.exchange(uri, HttpMethod.POST, requestEntity, Long.class);
+            Long idRestaurant = responseEntity.getBody();
+            savedUser.setRestaurantId(idRestaurant);
+            repository.save(savedUser); // Сохраняем пользователя снова с обновленным idRestaurant
         }
-        repository.save(credential);
         return "user added to the system";
     }
+
+
 
     public String generateToken(String username, Role role) {
         return jwtService.generateToken(username, role);
