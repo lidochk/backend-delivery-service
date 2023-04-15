@@ -8,9 +8,6 @@ import com.example.authservice.entity.UserCredential;
 import com.example.authservice.repository.UserCredentialRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.parameters.P;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -60,6 +57,7 @@ public class AuthService {
         if (savedUser.getRole() == Role.COURIER){
             CourierDTO courierDTO = new CourierDTO();
             courierDTO.setName(savedUser.getName());
+            courierDTO.setEmail(savedUser.getEmail());
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
@@ -71,6 +69,25 @@ public class AuthService {
         return "user added to the system";
     }
 
+
+    public void updateUser(UserCredential updatedUser) {
+        Optional<UserCredential> userCredentialOptional = repository.findByEmail(updatedUser.getEmail());
+
+        if (userCredentialOptional.isPresent()) {
+            UserCredential existingUser = userCredentialOptional.get();
+
+            existingUser.setName(updatedUser.getName());
+            existingUser.setEmail(updatedUser.getEmail());
+            if (updatedUser.getPassword() != null) {
+                existingUser.setPassword(passwordEncoder.encode(updatedUser.getPassword()));
+            }
+            existingUser.setRole(updatedUser.getRole());
+
+            repository.save(existingUser);
+        } else {
+            throw new ApiRequestException("User with ID " + updatedUser.getId() + " not found");
+        }
+    }
 
 
     public String generateToken(String email, Role role) {

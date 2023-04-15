@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/auth")
+@CrossOrigin
 public class AuthController {
 
 
@@ -44,6 +45,11 @@ public class AuthController {
     public String validate(@RequestParam String token){
         authService.validateToken(token);
         return "Token is valid";
+    }
+
+    @PutMapping("/updateUserInfo")
+    public void update(@RequestBody UserCredential userCredential){
+        authService.updateUser(userCredential);
     }
 
 }
