@@ -4,15 +4,18 @@ import com.example.authservice.config.CustomUserDetails;
 import com.example.authservice.entity.UserCredential;
 import com.example.authservice.dto.AuthRequest;
 import com.example.authservice.service.AuthService;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/auth")
-@CrossOrigin
 public class AuthController {
 
 
@@ -50,6 +53,11 @@ public class AuthController {
     @PutMapping("/updateUserInfo")
     public void update(@RequestBody UserCredential userCredential){
         authService.updateUser(userCredential);
+    }
+
+    @PostMapping("/login")
+    public Map<String, String> loginUser(@RequestBody UserCredential userCredential){
+        return authService.loginUser(userCredential);
     }
 
 }

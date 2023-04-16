@@ -3,9 +3,11 @@ package com.example.authservice.service;
 import com.example.authservice.Exception.ApiRequestException;
 import com.example.authservice.dto.CourierDTO;
 import com.example.authservice.dto.RestaurantDTO;
+import com.example.authservice.dto.UserDTO;
 import com.example.authservice.entity.Role;
 import com.example.authservice.entity.UserCredential;
 import com.example.authservice.repository.UserCredentialRepository;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -28,6 +30,7 @@ public class AuthService {
 
     @Autowired
     RestTemplate restTemplate;
+
 
     public String saveUser(UserCredential credential){
         credential.setPassword(passwordEncoder.encode(credential.getPassword()));
@@ -53,7 +56,6 @@ public class AuthService {
             savedUser.setRestaurantId(idRestaurant);
             repository.save(savedUser); // Сохраняем пользователя снова с обновленным idRestaurant
         }
-        //TODO:понять что делать
         if (savedUser.getRole() == Role.COURIER){
             CourierDTO courierDTO = new CourierDTO();
             courierDTO.setName(savedUser.getName());
@@ -64,6 +66,18 @@ public class AuthService {
             headers.set(HttpHeaders.AUTHORIZATION, "Bearer " + token);
             HttpEntity<CourierDTO> requestEntity = new HttpEntity<>(courierDTO, headers);
             String uri = "http://localhost:8080/courier/registerCourier";
+            restTemplate.exchange(uri, HttpMethod.POST, requestEntity, Long.class);
+        }
+        if (savedUser.getRole() == Role.USER){
+            UserDTO userDTO = new UserDTO();
+            userDTO.setName(savedUser.getName());
+            userDTO.setEmail(savedUser.getEmail());
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.set(HttpHeaders.AUTHORIZATION, "Bearer " + token);
+            HttpEntity<UserDTO> requestEntity = new HttpEntity<>(userDTO, headers);
+            String uri = "http://localhost:8080/user";
             restTemplate.exchange(uri, HttpMethod.POST, requestEntity, Long.class);
         }
         return "user added to the system";
@@ -87,6 +101,18 @@ public class AuthService {
         } else {
             throw new ApiRequestException("User with ID " + updatedUser.getId() + " not found");
         }
+    }
+
+
+    public Map<String, String> loginUser(UserCredential userCredential){
+        Map<String, String> json = new HashMap<>();
+        String email = userCredential.getEmail();
+        String password = userCredential.getPassword();
+        System.out.println("Login response: " + email);
+        System.out.println("Login response: " + password);
+        json.put("accessToken", "Bearer " + getAccessToken(email, password));
+        System.out.println("Login response: " + json);
+        return json;
     }
 
 
